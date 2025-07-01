@@ -7,12 +7,17 @@ from sqlalchemy.orm import Session
 from shared.models import Task, Base   # reuse model
 
 # connect same DB
-POSTGRES_URI = (
-    f"postgresql://{os.getenv('DB_USER','postgres')}:"
-    f"{os.getenv('DB_PASS','postgres')}@"
-    f"{os.getenv('DB_HOST','postgres')}:5432/"
-    f"{os.getenv('DB_NAME','tasks_db')}"
-)
+DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL:
+    POSTGRES_URI = DATABASE_URL          # full Neon string
+else:
+    POSTGRES_URI = (
+        f"postgresql://{os.getenv('DB_USER','postgres')}:"
+        f"{os.getenv('DB_PASS','postgres')}@"
+        f"{os.getenv('DB_HOST','postgres')}:5432/"
+        f"{os.getenv('DB_NAME','tasks_db')}"
+    )
+
 engine = create_engine(POSTGRES_URI, echo=False, future=True)
 Base.metadata.create_all(engine)
 
