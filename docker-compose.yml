@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    volumes:
+      - ./api:/api
+    depends_on:
+      - redis
+    networks:
+      - micro-network
+
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env
+    volumes:
+      - ./worker:/worker
+    depends_on:
+      - postgres
+    networks:
+      - micro-network
+
+  redis:
+    image: redis:latest
+    networks:
+      - micro-network
+
+  postgres:
+    image: postgres:16
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=tasks_db
+    networks:
+      - micro-network
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+
+networks:
+  micro-network:
