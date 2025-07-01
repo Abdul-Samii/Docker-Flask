@@ -5,17 +5,22 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import declarative_base, Session
-import redis
+# import redis
 import json
 import os
 import uvicorn
 
-POSTGRES_URI = (
-    f"postgresql://{os.getenv('DB_USER','postgres')}:"
-    f"{os.getenv('DB_PASS','postgres')}@"
-    f"{os.getenv('DB_HOST','postgres')}:5432/"
-    f"{os.getenv('DB_NAME','tasks_db')}"
-)
+DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL:
+    POSTGRES_URI = DATABASE_URL          # full Neon string
+else:
+    POSTGRES_URI = (
+        f"postgresql://{os.getenv('DB_USER','postgres')}:"
+        f"{os.getenv('DB_PASS','postgres')}@"
+        f"{os.getenv('DB_HOST','postgres')}:5432/"
+        f"{os.getenv('DB_NAME','tasks_db')}"
+    )
+
 engine = create_engine(POSTGRES_URI, echo=True, future=True)
 Base = declarative_base()
 
@@ -26,7 +31,7 @@ class Task(Base):
 
 Base.metadata.create_all(engine)
 
-redis_client = redis.Redis(host=os.getenv("REDIS_HOST","redis"), port=6379, db=0, decode_responses=True)
+# redis_client = redis.Redis(host=os.getenv("REDIS_HOST","redis"), port=6379, db=0, decode_responses=True)
 
 app = FastAPI()
 
@@ -42,7 +47,7 @@ def create_task(task: TaskIn):
         session.refresh(db_task)
 
     # enqueue for worker
-    redis_client.lpush("task_queue", json.dumps({"id": db_task.id, "text": db_task.text}))
+    # redis_client.lpush("task_queue", json.dumps({"id": db_task.id, "text": db_task.text}))
     return {"msg": "task queued", "id": db_task.id}
 
 @app.get("/tasks/{task_id}")
